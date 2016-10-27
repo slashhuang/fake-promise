@@ -1,14 +1,14 @@
 {
-  "name": "rxjs-tutorial",
+  "name": "ismorphic-promise",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "./node_modules/.bin/webpack-dev-server --progress --colors --port 8001"
+    "start": "./node_modules/.bin/webpack-dev-server --progress --colors --port 8002"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/slashhuang/rxJS-tutorial.git"
+    "url": "git+https://github.com/slashhuang/ismorphic-promise.git"
   },
   "author": "slashhuang",
   "license": "ISC",
@@ -29,12 +29,10 @@
     "webpack-dev-server": "^1.16.2"
   },
   "bugs": {
-    "url": "https://github.com/slashhuang/rxJS-tutorial/issues"
+    "url": "https://github.com/slashhuang/ismorphic-promise/issues"
   },
-  "homepage": "https://github.com/slashhuang/rxJS-tutorial#readme",
+  "homepage": "https://github.com/slashhuang/ismorphic-promise#readme",
   "dependencies": {
-    "jquery": "^3.1.1",
-    "rxjs": "^5.0.0-beta.12",
-    "rxjs-es": "^5.0.0-beta.12"
+    "jquery": "^3.1.1"
   }
 }
