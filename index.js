@@ -21,26 +21,30 @@ class Promise{
         };
          /* 异步情况下的Promise状态处理函数执行数组*/
         this.callQueue = [];
-        let _this = this;
-        /*用来传递resolve的通信*/
-        this.resolveNotifier=(val)=>{
-            this.promiseState={
-                status:'resolved',
-                value:val||null
-            }
-        };
-        /*用来传递reject的通信*/
-        this.rejectNotifier=(val)=>{
-            this.promiseState={
-                status:'rejected',
-                value:val||null
-            }
-        };
         /* 立即执行new Promise的参数函数executor,不对this进行任何指向*/
-        executor(this.resolveNotifier,this.rejectNotifier);
+        executor(this.notifier('resolved'),this.notifier('rejected'));
+    }
+     /*用来传递resolve + reject的通信*/
+    notifier(type){
+        return (val)=>{
+             this.promiseState={
+                status:type,
+                value:val||null
+            };
+            //同步的话顺序所有的值都已经一次执行完毕。===！处理异步情况
+            if(this.callQueue.length>0){
+                // 获取执行函数第一项触发结果
+                let $1stFn = this.callQueue.shift();
+                // 获取对应函数的键值名
+                let keyName = type + 'Fn';
+                let $fn = $1stFn[keyName]; //
+                typeof $fn == 'function' && $fn(val);
+            }
+        }
     }
     /* prototype 处理Promise的结构 */
     then(resFn,rejFn){
+        debugger;
         let {status,value} = this.promiseState;
         /*处理同步的情况*/
         switch(status){
@@ -48,15 +52,16 @@ class Promise{
                 resFn && resFn(value);
                 break;
             case 'rejected':
-                resFn && rejFn(value);
+                rejFn && rejFn(value);
                 break;
             case 'pending':
                 /*处理异步的情况*/
                 this.callQueue.push({
-                    resolved:resFn||null,
-                    rejected:rejFn||null
+                    resolvedFn:resFn||null,
+                    rejectedFn:rejFn||null
                 })
         };
+       return this;
     }
     catch(){
 
@@ -76,15 +81,15 @@ class Promise{
     }
 }
 
-let test1  = new Promise(function(resolve,reject) {
-    resolve(5);
+let test1  = new Promise((resolve,reject)=>{
+    setTimeout(resolve,2000,5);
 })
-test1.then((val)=>{
+.then((val)=>{
     console.log(val);
-    return new Promise((resolve,reject)=>{
-        resolve(val+1)
-    })
-}).then((val)=>{console.log(val)})
+})
+.then((val)=>{
+    console.log(val)
+})
 
 
 

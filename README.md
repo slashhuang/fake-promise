@@ -20,6 +20,9 @@
 
 ![基本的Promise流程](./promise.png)
 
+## Promise实现思路
+>
+
 
 
 
