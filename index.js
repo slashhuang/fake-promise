@@ -9,17 +9,29 @@
  *
  */
 class Promise{
-    constructor(asyncFn){
-        this.callQueue = []; //存储异步执行回调队列
+    constructor(executor){
+         /* Promise的参数必须是function*/
+        if(typeof executor != 'function'){
+            throw new TypeError('Promise argument is not a  valid function');
+        }
+        /* Promise的状态集合 */
+        this.PromiseState=['pending','fulfilled','reject'];
+        /*存储异步执行回调队列，用pop、push来处理回调顺序*/
+        this.callQueue = [];
+        let _this = this;
+        /*用来传递resolve的通信*/
+        this.resolveNotifier=(val)=>{
+        };
+        /*用来传递reject的通信*/
+        this.rejectNotifier=()=>{
 
-        asyncFn();
-        this.length=0;
-         alert('init');
+        };
+        /* 立即执行new Promise的参数函数executor*/
+        executor.apply(this,[this.resolveNotifier,this.rejectNotifier]);
     }
     /* prototype 处理Promise的结构 */
     then(fn){
-        this.callQueue.push(fn);
-        return this
+
     }
     catch(){
 

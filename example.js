@@ -12,7 +12,7 @@
      (val)=>{
         console.log(val)
         return new Promise((res,rej)=>{
-            res(2)
+            rej(2)
         })
      },
      (val)=>{
