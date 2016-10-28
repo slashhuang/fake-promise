@@ -37,14 +37,14 @@ class Promise{
                 let $1stFn = this.callQueue.shift();
                 // 获取对应函数的键值名
                 let keyName = type + 'Fn';
-                let $fn = $1stFn[keyName]; //
+                let $fn = $1stFn[keyName];
+                // 执行函数
                 typeof $fn == 'function' && $fn(val);
             }
         }
     }
-    /* prototype 处理Promise的结构 */
+    /* prototype 处理Promise的结构。 then的每个状态都是个容器，相互独立 */
     then(resFn,rejFn){
-        debugger;
         let {status,value} = this.promiseState;
         /*处理同步的情况*/
         switch(status){
@@ -82,13 +82,13 @@ class Promise{
 }
 
 let test1  = new Promise((resolve,reject)=>{
-    setTimeout(resolve,2000,5);
+    setTimeout(resolve,0,5);
 })
 .then((val)=>{
-    console.log(val);
+   alert(val);
 })
 .then((val)=>{
-    console.log(val)
+    alert(val+1)
 })
 
 
