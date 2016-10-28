@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "./node_modules/.bin/webpack-dev-server --progress --colors --port 8002"
+    "start": "open http://localhost:8002/webpack-dev-server/ && ./node_modules/.bin/webpack-dev-server --progress --colors --port 8002"
   },
   "repository": {
     "type": "git",
