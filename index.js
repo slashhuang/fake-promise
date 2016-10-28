@@ -26,8 +26,8 @@ class Promise{
         this.rejectNotifier=()=>{
 
         };
-        /* 立即执行new Promise的参数函数executor*/
-        executor.apply(this,[this.resolveNotifier,this.rejectNotifier]);
+        /* 立即执行new Promise的参数函数executor,不对this进行任何指向*/
+        executor.apply(null,[this.resolveNotifier,this.rejectNotifier]);
     }
     /* prototype 处理Promise的结构 */
     then(fn){
