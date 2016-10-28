@@ -16,6 +16,7 @@ class Promise{
         this.length=0;
          alert('init');
     }
+    /* prototype 处理Promise的结构 */
     then(fn){
         this.callQueue.push(fn);
         return this
@@ -23,7 +24,17 @@ class Promise{
     catch(){
 
     }
-    compile(){
+    /* 静态方法 处理Promise的逻辑 */
+    static race(){
+
+    }
+    static all(){
+
+    }
+    static resolve(){
+
+    }
+    static reject(){
 
     }
 }
