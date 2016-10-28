@@ -5,7 +5,7 @@
 var path =require('path');
 module.exports = {
     entry: {
-        example:"./index.js"
+        'bundle':"./index.js"
     },
     output: {
         publicPath:'/dist/',
