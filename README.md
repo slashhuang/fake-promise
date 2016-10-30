@@ -7,7 +7,9 @@
 3. 代码简单，性能高，内存回收处理及时。
 4. 纯粹作者原创，未借鉴别人的思路，具有一定程度的突破性。
 5. 前后端通用,相比于node/browser内置的Promise对象更具有扩展性
-6. 源代码
+6. 源代码基于ES6的class语法，更加清晰
+
+### (查看代码)(index.js)
 
 ## static methods
 
@@ -25,9 +27,7 @@
 
 > prototype.catch 处理Promise的reject返回
 
-## Promise实现思路
-
-### 骨架
+## Promise骨架
 ```javascript
 	class Promise{
     	constructor(executor){
