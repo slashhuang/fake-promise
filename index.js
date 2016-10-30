@@ -183,7 +183,7 @@ class Promise{
                 });
             });
     }
-    /**仅仅接手这三种类型数据value/promise/thenable**/
+    /**仅仅接收value/promise/thenable这三种类型数据**/
     static resolve($Promise){
          //如果是Promise才需要处理
         if($Promise instanceof Promise){
