@@ -7,6 +7,7 @@
 3. 代码简单，性能高，内存回收处理及时。
 4. 纯粹作者原创，未借鉴别人的思路，具有一定程度的突破性。
 5. 前后端通用,相比于node/browser内置的Promise对象更具有扩展性
+6. 源代码
 
 ## static methods
 
@@ -23,8 +24,6 @@
 > prototype.then 处理Promise的resolve返回
 
 > prototype.catch 处理Promise的reject返回
-
-![基本的Promise流程](./promise.png)
 
 ## Promise实现思路
 
@@ -66,6 +65,9 @@
     	static reject(reason){
     	}
 ```
+
+
+![基本的Promise流程](./promise.png)
 
 
 

@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "open http://localhost:8002/webpack-dev-server/ && ./node_modules/.bin/webpack-dev-server --progress --colors --port 8002"
+    "start": "npm run open && ./node_modules/.bin/webpack-dev-server --progress --colors --port 8002  --file index",
+    "test": " npm run open && ./node_modules/.bin/webpack-dev-server --progress --colors --port 8002  --file test",
+    "open": "open http://localhost:8002/webpack-dev-server/"
   },
   "repository": {
     "type": "git",
@@ -31,8 +33,5 @@
   "bugs": {
     "url": "https://github.com/slashhuang/ismorphic-promise/issues"
   },
-  "homepage": "https://github.com/slashhuang/ismorphic-promise#readme",
-  "dependencies": {
-    "jquery": "^3.1.1"
-  }
+  "homepage": "https://github.com/slashhuang/ismorphic-promise#readme"
 }
