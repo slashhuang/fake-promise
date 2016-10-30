@@ -183,11 +183,37 @@ class Promise{
                 });
             });
     }
-    static resolve(){
-
+    /**仅仅接手这三种类型数据value/promise/thenable**/
+    static resolve($Promise){
+         //如果是Promise才需要处理
+        if($Promise instanceof Promise){
+            $Promise.then(
+                val=>res(val),
+                val=>rej(val)
+            );
+        }
+         return new Promise((res,rej)=>{
+                if($Promise instanceof Promise){
+                    $Promise.then(
+                        val=>res(val),
+                        val=>rej(val)
+                    );
+                }
+               else{
+                    //如果是then键值的伪promise
+                    if(typeof $Promise =='object' &&$Promise.hasOwnProperty('then')){
+                        let { then }= $Promise;
+                        return new Promise(then)
+                    }else{
+                        res($Promise); 
+                    }
+                 }
+             });
     }
-    static reject(){
-
+    static reject(reason){
+            return new Promise((res,rej)=>{
+                rej(resson);
+             });
     }
 }
 /* 测试1用来 测试同步情况下的处理 ======测试通过======*/
@@ -265,7 +291,7 @@ new Promise((res,rej)=>{
 
 // -------------------静态方法-------------------
 /* Promise.all 等待回调全部返回 */
-var t1 = 1;
+var t1 = Promise.resolve(3);
 var t2 = 1337;
 var t3 = new Promise((resolve, reject) => {
   setTimeout(resolve, 100, "foo");
