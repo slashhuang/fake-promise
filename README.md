@@ -21,7 +21,7 @@
 ![基本的Promise流程](./promise.png)
 
 ## Promise实现思路
->
+> new Promise(fn);fn的执行结果**仅仅**保存当前Promise的状态，返回Promise实例。
 
 
 

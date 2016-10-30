@@ -8,36 +8,15 @@
 
  // -------------------prototype方法-------------------
 'use strict'
- let resolveFn = [
-     (val)=>{
-        console.log(val)
-        return new Promise((res,rej)=>{
-            rej(2)
-        })
-     },
-     (val)=>{
-        console.log(val);
-        return new Promise((res,rej)=>{
-            rej(3)
-        })
-    }
-];
-let rejectFn = [
-    (val)=>{
-        console.log('rejected----',val);
-        return new Promise((res,rej)=>{
-            res(3)
-        })
-    }
-];
 
 new Promise((res,rej)=>{
-    res(1);
+  res(1)
 })
-.then(resolveFn[0])
-.then(resolveFn[1])
-.catch(rejectFn[0])
-.then(resolveFn[1])
+.then((val)=>{console.log(val);return new Promise(()=>{
+  throw new TypeError('fuck')
+})},(val)=>console.log('rejected then1===',val))
+.then((val)=>console.log(val),(val)=>console.log('rejected===',val))
+.catch((val)=>console.log('rejected=catch==',val))
 
 // -------------------静态方法-------------------
 /* Promise.all 等待回调全部返回 */
