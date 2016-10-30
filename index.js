@@ -62,17 +62,13 @@ class Promise{
      */
     chaindHandler(fn){
         /*必须return Promise*/
-        let {status,value} = this.promiseState;
-        /*Promise已经有状态，则返回新的Promise实例*/
-        if(status != 'pending'){
-            return new Promise(()=>{});
+        let {status,value} = this.promiseState;       
+        if(fn){
+        /*回调函数的结果如果是Promise，则返回该Promise,不然返回新的Promise实例*/
+            return fn instanceof Promise ? fn : new Promise(()=>{});
         }else{
-             if(fn){
-                /*回调函数的结果如果是Promise，则返回该Promise,不然返回新的Promise实例*/
-                return fn instanceof Promise ? fn : new Promise(()=>{});
-            }else{
-                return this;
-            }
+        //没有返回，说明没有对应的函数处理，则继续往下一层寻找处理函数    
+            return this;
         }
     }
     /*根据then和catch处理逻辑*/
@@ -129,11 +125,16 @@ class Promise{
 let test1  = new Promise((resolve,reject)=>{
     throw new TypeError('fuck')
 })
+.then((val)=>{},
+    (val)=>{
+    console.log(val);
+    return new Promise((res,rej)=>{rej(2)})
+})
 .then((val)=>{
-   console.log(val);
-},(val)=>console.log(val))
+    console.log(val)
+})
 .catch((val)=>{
-    console.log(val+1)
+    console.log('catch=====',val+1)
 })
 
 
