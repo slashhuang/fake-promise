@@ -39,19 +39,33 @@ class Promise{
      /*用来传递resolve + reject的通信*/
     notifier(type){
         return (val)=>{
-            this.promiseState={
-                status:type,
-                value:val||null
-            };
-            //从回调队列中取出处理函数
-            if(this.callQueue.length>0){
-                // 获取执行函数第一项触发结果
-                let $1stFn = this.callQueue.shift();
-                // 获取对应函数的键值名
-                let keyName = type + 'Fn';
-                let $fn = $1stFn[keyName];
-                // 执行函数
-                typeof $fn == 'function' && $fn(val);
+            // Promise的结果只能执行一次
+            if( this.promiseState.status == 'pending'){
+                this.promiseState={
+                    status:type,
+                    value:val||null
+                };
+                let C_length = this.callQueue.length;
+                //递归寻找执行函数
+                let queuedHandler =()=>{
+                     //从回调队列中取出处理函数
+                    if(this.callQueue.length>0){
+                        // 获取执行函数第一项触发结果
+                        let _1stFn = this.callQueue.shift();
+                        // 获取对应函数决定取resolvedFn还是rejectedFn来处理
+                        let keyName = type + 'Fn';
+                        let $fn = _1stFn[keyName];
+                        // 执行函数
+                        if( typeof $fn == 'function'){
+                            console.warn(`执行函数为链式调用的第${C_length-this.callQueue.length}个`)
+                            this.chaindHandler($fn(val));
+                        }else{
+                            //继续寻找下一个能够处理的函数
+                            queuedHandler();
+                        }
+                    }
+                };
+                queuedHandler();
             }
         }
     }
@@ -60,20 +74,35 @@ class Promise{
      * 功能点2: 回调处理函数只有一个[避免catch处理一次、then的第二个参数处理一次]，
      * 返回一个Promise实例
      */
-    chaindHandler(fn){
+    chaindHandler(Result){
         /*必须return Promise*/
         let {status,value} = this.promiseState;       
-        if(fn){
-        /*回调函数的结果如果是Promise，则返回该Promise,不然返回新的Promise实例*/
-            return fn instanceof Promise ? fn : new Promise(()=>{});
+        if(Result){
+            /*
+             * 回调函数的结果如果是Promise，则返回该Promise,
+             * 同时把后续的回调函数栈赋值给新的Promise
+             */
+            if(Result instanceof Promise){
+                Result.callQueue =this.callQueue;
+                //将存储的then/catch重新放回到Result下面
+                while(this.callQueue.length>0){
+                     let {resolvedFn,rejectedFn} = this.callQueue.shift();
+                     Result = Result.then(resolvedFn,rejectedFn);
+                }
+            }
+            /*不然返回新的Promise实例*/
+            return Result instanceof Promise ? Result : new Promise(()=>{});
         }else{
-        //没有返回，说明没有对应的函数处理，则继续往下一层寻找处理函数    
+            //没有返回，说明没有对应的函数处理或者是异步场景。则返回this，保持Promise的实例不变
             return this;
         }
     }
     /*根据then和catch处理逻辑*/
     handlelPromise(type){
         return (resFn,rejFn)=>{
+            //过滤处理函数
+            resFn = typeof resFn=='function'&&resFn;
+            rejFn = typeof rejFn=='function'&&rejFn
             //为了用统一的模块处理then/catch,这里做个兼容处理
             if(type=='catch'){
                  rejFn=resFn;
@@ -81,6 +110,7 @@ class Promise{
             }
             let {status,value} = this.promiseState;
             let self = this;
+            //获取处理的结果
             let chaindHandler =(function(status){
                 /*处理同步的情况*/
                 switch(status){
@@ -108,11 +138,34 @@ class Promise{
        return this.handlelPromise('catch')(rejFn);
     }
     /* 静态方法 处理Promise的逻辑 */
-    static race(){
-
+    static race(...proimiseInstance){
+       //直接借用Promise的then方法，捕获数据,只要触发一次，Promise就seal住不接受后续处理，因此还是比较简单
+        return new Promise((res,rej)=>{
+            proimiseInstance.forEach(($Promise)=>{
+                    $Promise.then(
+                        val=>res(val),
+                        val=>rej(val)
+                    );
+                });
+            });
     }
-    static all(){
+    static all(...proimiseInstance){
+         //直接借用Promise的then方法，捕获数据
+         let $status = [];
+        let triggerFn=()=>{
+            //都返回结果后
+            if($status.length  = proimiseInstance.length){
 
+            }
+        } 
+        return new Promise((res,rej)=>{
+            proimiseInstance.forEach(($Promise)=>{
+                     $Promise.then(
+                        val=>$status.push({status:'resolved',val}),
+                        val=>$status.push({status:'rejected',val})
+                    );
+                });
+            });
     }
     static resolve(){
 
@@ -121,21 +174,48 @@ class Promise{
 
     }
 }
+/* 测试1用来 测试同步情况下的处理 ======测试通过======*/
+// let test1  = new Promise((resolve,reject)=>{
+//     throw new TypeError('fuck')
+// })
+// .then((val)=>{},
+//     (val)=>{
+//     console.log(val);
+//     return new Promise((res,rej)=>{rej(2)})
+// })
+// .then((val)=>{
+//     console.log(val)
+// })
+// .catch((val)=>{
+//     console.log('catch=====',val+1)
+// });
 
-let test1  = new Promise((resolve,reject)=>{
-    throw new TypeError('fuck')
+/* 测试2用来 测试异步情况下，队列形式的函数处理 ======测试通过======*/
+let test2  = new Promise((resolve,reject)=>{
+    setTimeout(()=>{
+        console.log('async  ==>  level 1');
+        resolve('async level 1')
+    },100)
 })
-.then((val)=>{},
-    (val)=>{
-    console.log(val);
-    return new Promise((res,rej)=>{rej(2)})
+.then('1') //参数无法处理Promise状态，寻找下一个执行函数
+.then((val)=>{
+        console.warn(val,'---- executed');
+        return new Promise((res,rej)=>{
+            console.log('sync after async ==> level 2');
+            res('sync after async level 2')
+        })
 })
 .then((val)=>{
-    console.log(val)
+        console.warn(val,'---- executed');
+        return new Promise((res,rej)=>{
+            console.log('sync after async ==> level 2');
+            throw new TypeError('sync error thrown');
+        })
 })
 .catch((val)=>{
-    console.log('catch=====',val+1)
-})
+    console.log('catch=====',val)
+});
+
 
 
 
