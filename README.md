@@ -9,7 +9,7 @@
 5. 前后端通用,相比于node/browser内置的Promise对象更具有扩展性
 6. 源代码基于ES6的class语法，更加清晰
 
-### (查看代码)(index.js)
+### [查看代码](index.js)
 
 ## static methods
 
