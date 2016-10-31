@@ -25,8 +25,6 @@ export class Promise{
         };
          /* 异步情况下的Promise状态处理函数执行数组*/
         this.callQueue = [];
-        /*当前Promise依赖的之前的返回*/
-        this.dependency = [];
         /*所有观测Promise的对象*/
         this.observers = [];
         /* 立即执行new Promise的参数函数executor,如果没有调用notifier通知，则一直为pending状态*/
