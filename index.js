@@ -8,7 +8,9 @@
  * Promise的状态变为fulfilled + rejected的时候，对应的队列中的处理函数将会执行
 
  * 单一状态都会不断的寻找处理函数，直到能够被处理,并且一个状态只能被处理一次
- *
+ * then1 ==> {promiseState1,callQueue,dependency=[]}
+ * then2 ==> {promiseState2,callQueue-then1[callQueue],dependency=[then1]}
+ * then3 ==> {promiseState2,callQueue-then1[callQueue]-then2[callQueue],dependency=[then2]}
  */
 export class Promise{
     constructor(executor){
@@ -23,6 +25,8 @@ export class Promise{
         };
          /* 异步情况下的Promise状态处理函数执行数组*/
         this.callQueue = [];
+        /*当前Promise依赖的之前的返回*/
+        this.dependency = [];
         /* 立即执行new Promise的参数函数executor,如果没有调用notifier通知，则一直为pending状态*/
         try{
           executor(this.notifier('resolved'),this.notifier('rejected'));
@@ -70,13 +74,14 @@ export class Promise{
         }
     }
     /* 链式调用，
-     * 功能点1: 为了保持状态独立 
-     * 功能点2: 回调处理函数只有一个[避免catch处理一次、then的第二个参数处理一次]，
-     * 返回一个Promise实例
+     * 功能点1: 处理链式调用的返回
+     * 同步返回 ==> return this
+     * 异步返回 ==> return Promise
+     *
      */
     chaindHandler(Result){
         /*必须return Promise*/
-        let {status,value} = this.promiseState;       
+        let {status,value} = this.promiseState;
         if(Result){
             /*
              * 回调函数的结果如果是Promise，则返回该Promise,
@@ -97,7 +102,11 @@ export class Promise{
             return this;
         }
     }
-    /*根据then和catch处理逻辑,同步则立即处理、异步则缓存在this.callQueue中*/
+    /*
+     * 由于逻辑可以复用，采用一个方法统一处理then/catch
+     * 根据then和catch处理逻辑,同步则立即处理、异步则缓存在this.callQueue中
+     * 同于Promise每个返回都是一个独立的状态集，因此返回一个新的Promise，并且这个新的Promise依赖于调用方的返回
+     */
     handlelPromise(type){
         return (resFn,rejFn)=>{
             //过滤处理函数
@@ -169,7 +178,7 @@ export class Promise{
             if($statusValue.length  == PromiseInstance.length){
                 res($statusValue)
             }
-        } 
+        }
         return new Promise((res,rej)=>{
             PromiseInstance.forEach(($Promise)=>{
                  if($Promise instanceof Promise){
@@ -205,7 +214,7 @@ export class Promise{
                         let { then }= $Promise;
                         return new Promise(then)
                     }else{
-                        res($Promise); 
+                        res($Promise);
                     }
                  }
              });
