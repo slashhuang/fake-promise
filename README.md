@@ -18,15 +18,18 @@
 1. 状态
 
 > 每个Promise都是独立的状态，状态由该Promise的最后状态决定
+
 > 每个Promise状态始终保留，不会被外界影响
 
 2. 链式处理
+
 > 所有的通知处理机制来自于(resolved,rejected)
 
 3. Promise能兼容同步和异步场景的回调处理
 
 ## Promise数据结构骨架
-```bash
+
+```javascript
      let PromiseStructure = {
         observers:[],  //观察者数组，当前Promise状态改变的时候，通知所有的观察者
         promiseState:{ //存储数据及状态
@@ -41,8 +44,16 @@
 ```
 
 ```javascript
+
     /**  举个常见的场景 **/
-    /*
+
+    let test1 = new Promise((res,rej)=>setTimeout(res,100,1));
+
+    let f2 =  (val)=>new Promise((res,rej)=>{ res(2) });
+
+    let test2 = test1.then(f2)
+
+    /* 分析
      test1={
         observers:[test2],  //观察者数组，当前Promise状态改变的时候，通知所有的观察者
         promiseState:{ //存储数据及状态
@@ -81,16 +92,11 @@
         },
         callQueue:[] 
      */
-    let test1 = new Promise((res,rej)=>setTimeout(res,100,1));
-
-    let f2 =  (val)=>new Promise((res,rej)=>{ res(2) });
-
-    let test2 = test1.then(f2)
 	
 ```
 
 
-![基本的Promise流程](./promise.png)
+![基本的Promise流程](promise.png)
 
 
 

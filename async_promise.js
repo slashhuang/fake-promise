@@ -94,9 +94,7 @@ export class Promise{
                         return rejFn && rejFn(value);
                          /*处理异步的情况*/
                     case 'pending':
-                        let newP = new Promise((res,rej)=>{
-
-                        });
+                        let newP = new Promise((res,rej)=>{});
                         /* 处理异步,推送进回调数组
                          * 注册dependency中的notifier
                          */
@@ -250,7 +248,7 @@ export class Promise{
     }
 }
 console.log('welcome to use Promise')
-/*测试同步情况*/
+/*测试异步情况*/
 let test1 = new Promise((res,rej)=>{
     setTimeout(res,1000,1);
 });
@@ -259,6 +257,10 @@ let test2 = test1.then((val)=>{
     console.log(val);
     return new Promise((res,rej)=>{
         setTimeout(res,1000,3);
+    }).then((val)=>{
+       return new Promise((res,rej)=>{
+         setTimeout(res,1000,4);
+       })
     })
 });
 console.dir(test2);
