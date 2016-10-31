@@ -49,57 +49,7 @@ export class Promise{
                     status:type,
                     value:val||null
                 };
-                let C_length = this.callQueue.length;
-                //递归寻找执行函数
-                // let queuedHandler =()=>{
-                //      //从回调队列中取出处理函数
-                //     if(this.callQueue.length>0){
-                //         // 获取执行函数第一项触发结果
-                //         let _1stFn = this.callQueue.shift();
-                //         // 获取对应函数决定取resolvedFn还是rejectedFn来处理
-                //         let keyName = type + 'Fn';
-                //         let $fn = _1stFn[keyName];
-                //         // 执行函数
-                //         if( typeof $fn == 'function'){
-                //             // console.warn(`执行函数为链式调用的第${C_length-this.callQueue.length}个`)
-                //             this.chaindHandler($fn(val));
-                //         }else{
-                //             //继续寻找下一个能够处理的函数
-                //             queuedHandler();
-                //         }
-                //     }
-                // };
-                // queuedHandler();
             }
-        }
-    }
-    /* 链式调用，
-     * 功能点1: 处理链式调用的返回
-     * 同步返回 ==> return this
-     * 异步返回 ==> return Promise
-     *
-     */
-    chaindHandler(Result){
-        /*必须return Promise*/
-        let {status,value} = this.promiseState;
-        if(Result){
-            /*
-             * 回调函数的结果如果是Promise，则返回该Promise,
-             * 同时把后续的回调函数栈赋值给新的Promise
-             */
-            if(Result instanceof Promise){
-                Result.callQueue =this.callQueue;
-                //将存储的then/catch重新放回到Result下面
-                while(this.callQueue.length>0){
-                     let {resolvedFn,rejectedFn} = this.callQueue.shift();
-                     Result = Result.then(resolvedFn,rejectedFn);
-                }
-            }
-            /*不然返回新的Promise实例*/
-            return Result instanceof Promise ? Result : new Promise(()=>{});
-        }else{
-            //没有返回，说明没有对应的函数处理或者是异步场景。则返回this，保持Promise的实例不变
-            return this;
         }
     }
     /*
@@ -131,21 +81,6 @@ export class Promise{
                         return  resFn && resFn(value);
                     case 'rejected':
                         return rejFn && rejFn(value);
-                         /*处理异步的情况*/
-                    case 'pending':
-                        let newP = new Promise(()=>{},()=>{});
-                        /*处理异步,推送进回调数组*/
-                        newP.promiseState={
-                            status:'pending',
-                            value:null
-                        };
-                        newP.callQueue = [{
-                            resolvedFn:resFn||null,
-                            rejectedFn:rejFn||null
-                        }];
-                        /*当前的状态依赖上一个状态*/
-                        newP.dependency = this;
-                        return newP;
                 };
             }(status));
             return this.generatePromise(g_Promise);
