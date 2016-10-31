@@ -56,6 +56,7 @@ export class Promise{
                     value:val||null
                 };
                 let C_length = this.callQueue.length;
+                //遍历观察者
                 this.observers.forEach((o_fn)=>{
                   o_fn(this);
                 })
@@ -117,7 +118,8 @@ export class Promise{
                               let $fn = _1stFn[status + 'Fn'];
                               // 执行函数
                               if( typeof $fn == 'function'){
-                                  $fn(val);
+                                  let $cbk = $fn(val);
+                                  newP = newP.generatePromise($cbk);
                                   //回收callQueue
                                   newP.callQueue = [];
                               }else{
