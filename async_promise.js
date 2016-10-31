@@ -94,21 +94,18 @@ export class Promise{
                         return rejFn && rejFn(value);
                          /*处理异步的情况*/
                     case 'pending':
-                        let newP = new Promise(()=>{},()=>{});
+                        let newP = new Promise((res,rej)=>{
+
+                        });
                         /* 处理异步,推送进回调数组
                          * 注册dependency中的notifier
                          */
-                        newP.promiseState={
-                            status:'pending',
-                            value:null
-                        };
                         newP.callQueue = [{
                             resolvedFn:resFn||null,
                             rejectedFn:rejFn||null
                         }];
                         /*注册对这个Promise的观察者*/
                         self.subscribe((dependency_state)=>{
-                          debugger;
                           let { promiseState } = dependency_state;
                           let { status,value } = promiseState;
                           if(newP.callQueue.length>0){
@@ -118,13 +115,33 @@ export class Promise{
                               let $fn = _1stFn[status + 'Fn'];
                               // 执行函数
                               if( typeof $fn == 'function'){
-                                  let $cbk = $fn(val);
-                                  newP = newP.generatePromise($cbk);
-                                  //回收callQueue
-                                  newP.callQueue = [];
+                                  let $cbk = $fn(value);
+                                  //如果返回还是个promise，则将返回的状态赋值给newP
+                                  if($cbk && $cbk instanceof Promise){
+                                     //newP的回调队列挂载到新的状态上
+                                      $cbk.observers = $cbk.observers.concat(newP.observers);
+                                      newP = $cbk;
+                                      newP.then((val)=>{
+                                          newP.observers.forEach((o_fn)=>{
+                                            o_fn(newP);
+                                          })},(val)=>{
+                                          newP.observers.forEach((o_fn)=>{
+                                            o_fn(newP);
+                                          });
+                                      });
+                                  }else{
+                                     //如果没有可以执行的函数,则把newP赋值回去
+                                    newP.observers.forEach((o_fn)=>{
+                                      o_fn(self);
+                                    });
+                                    newP = self;
+                                  }
                               }else{
                                   //如果没有可以执行的函数,则把newP赋值回去
-                                  newP = self;
+                                    newP.observers.forEach((o_fn)=>{
+                                      o_fn(self);
+                                    });
+                                    newP = self;
                               }
                           }
                         });
@@ -241,7 +258,7 @@ console.dir(test1);
 let test2 = test1.then((val)=>{
     console.log(val);
     return new Promise((res,rej)=>{
-        res(2);
+        setTimeout(res,1000,3);
     })
 });
 console.dir(test2);
