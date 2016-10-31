@@ -73,35 +73,6 @@ export class Promise{
             }
         }
     }
-    /* 链式调用，
-     * 功能点1: 处理链式调用的返回
-     * 同步返回 ==> return this
-     * 异步返回 ==> return Promise
-     *
-     */
-    chaindHandler(Result){
-        /*必须return Promise*/
-        let {status,value} = this.promiseState;
-        if(Result){
-            /*
-             * 回调函数的结果如果是Promise，则返回该Promise,
-             * 同时把后续的回调函数栈赋值给新的Promise
-             */
-            if(Result instanceof Promise){
-                Result.callQueue =this.callQueue;
-                //将存储的then/catch重新放回到Result下面
-                while(this.callQueue.length>0){
-                     let {resolvedFn,rejectedFn} = this.callQueue.shift();
-                     Result = Result.then(resolvedFn,rejectedFn);
-                }
-            }
-            /*不然返回新的Promise实例*/
-            return Result instanceof Promise ? Result : new Promise(()=>{});
-        }else{
-            //没有返回，说明没有对应的函数处理或者是异步场景。则返回this，保持Promise的实例不变
-            return this;
-        }
-    }
     /*
      * 由于逻辑可以复用，采用一个方法统一处理then/catch
      * 根据then和catch处理逻辑,同步则立即处理、异步则缓存在this.callQueue中
@@ -144,7 +115,7 @@ export class Promise{
                             rejectedFn:rejFn||null
                         }];
                         /*当前的状态依赖上一个状态*/
-                        newP.dependency = this;
+                        newP.dependency = self;
                         return newP;
                 };
             }(status));
@@ -252,7 +223,7 @@ export class Promise{
 console.log('welcome to use Promise')
 /*测试同步情况*/
 let test1 = new Promise((res,rej)=>{
-    res(1);
+    setTimeout(res,1000,1);
 });
 console.dir(test1);
 let test2 = test1.then((val)=>{

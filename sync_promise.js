@@ -200,10 +200,14 @@ console.dir(test2);
 let test3 = test2.then((val)=>{
     console.log(val);
     return new Promise((res,rej)=>{
-        res(3);
+        rej(3);
     })
 });
 console.dir(test3);
+let test4 = test3.catch((val)=>{
+    console.log(val);
+  });
+console.dir(test4);
 
 
 

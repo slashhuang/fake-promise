@@ -6,6 +6,7 @@
   "scripts": {
     "start": "npm run open && ./node_modules/.bin/webpack-dev-server --progress --colors --port 8002  --file index",
     "sync": "npm run open && ./node_modules/.bin/webpack-dev-server --progress --colors --port 8002  --file sync_promise",
+    "async": "npm run open && ./node_modules/.bin/webpack-dev-server --progress --colors --port 8002  --file async_promise",
     "test": " npm run open && ./node_modules/.bin/webpack-dev-server --progress --colors --port 8002  --file test",
     "open": "open http://localhost:8002/webpack-dev-server/"
   },
