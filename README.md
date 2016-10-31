@@ -11,21 +11,31 @@
 
 ### [查看代码](index.js)
 
-## static methods
+## Promise基本设计思路
+> 对于一个长这样的Promise结构
+```javascript
+    new Promise((res,rej)=>{
+        //异步、同步操作
+    }).then(then1).then(then2).catch(catch1)
+```
+> 映射为，每一层次返回
+```bash
+   return promise1 = { promiseState1,handler1,dependency=null };
+   return promise2 = { promiseState2,handler2,dependency=promise1 };
+   return promise3 = { promiseState3,handler3,dependency=promise2 };
+   return promise4 = { promiseState4,handler4,dependency=promise3 };
+```
+> 处理逻辑
+```bash
+==> promise1 调用handler1
+====== resolve或者reject改变promise1的状态，通知  ======
+==> promise2开始执行handler2
+====== resolve或者reject改变promise2的状态，通知  ======
+==> promise3开始执行handler3
+...依次类推
 
-> Promise.all 等待所有的Promise都达到fulfilled的状态，任何一个Promise到达rejected都会触发 catch抛错
+```
 
-> Promise.race 等待所有的Promise中第一个达到fulfilled或者rejected的状态，即执行最后的then、catch结果
-
-> Promise.resolve 直接处理fulfilled返回结果
-
-> Promise.reject 直接处理reject的报错
-
-## prototype methods原型链方法
-
-> prototype.then 处理Promise的resolve返回
-
-> prototype.catch 处理Promise的reject返回
 
 ## Promise骨架
 ```javascript
@@ -38,7 +48,7 @@
         	}
         }
          /* 链式调用，
-	     * 功能点1: 为了保持状态独立 
+	     * 功能点1: 为了保持状态独立
 	     * 功能点2: 回调处理函数只有一个[避免catch处理一次、then的第二个参数处理一次]，
 	     * 返回一个Promise实例
 	     */

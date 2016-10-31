@@ -117,7 +117,7 @@ export class Promise{
                  rejFn=resFn;
                  resFn=null;
             }
-            let {status,value} = this.promiseState;
+            let {status,value} = this.dpendency;
             let self = this;
             //获取处理的结果
             let chaindHandler =(function(status){
