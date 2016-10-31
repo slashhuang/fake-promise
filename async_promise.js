@@ -59,7 +59,9 @@ export class Promise{
                 //遍历观察者
                 this.observers.forEach((o_fn)=>{
                   o_fn(this);
-                })
+                });
+                //回收所有的观察者,删除引用
+                this.observers = [];
             }
         }
     }
@@ -68,7 +70,7 @@ export class Promise{
      * 根据then和catch处理逻辑,同步则立即处理、异步则缓存在this.callQueue中
      * 同于Promise每个返回都是一个独立的状态集，因此返回一个新的Promise，并且这个新的Promise依赖于调用方的返回
      */
-    handlelPromise(type){
+    handlePromise(type){
         return (resFn,rejFn)=>{
             //如果都不是function类型,则不新增Promise状态
             if(typeof resFn!='function' && typeof rejFn!='function'){
@@ -92,17 +94,15 @@ export class Promise{
                         return  resFn && resFn(value);
                     case 'rejected':
                         return rejFn && rejFn(value);
-                         /*处理异步的情况*/
+                         /*处理异步的情况，最核心的逻辑*/
                     case 'pending':
                         let newP = new Promise((res,rej)=>{});
-                        /* 处理异步,推送进回调数组
-                         * 注册dependency中的notifier
-                         */
+                        /* 处理异步,将处理函数缓存在实例数组里 */
                         newP.callQueue = [{
                             resolvedFn:resFn||null,
                             rejectedFn:rejFn||null
                         }];
-                        /*注册对这个Promise的观察者*/
+                        /*注册newP对上个Promise的观察者*/
                         self.subscribe((dependency_state)=>{
                           let { promiseState } = dependency_state;
                           let { status,value } = promiseState;
@@ -112,35 +112,28 @@ export class Promise{
                               // 获取对应函数决定取resolvedFn还是rejectedFn来处理
                               let $fn = _1stFn[status + 'Fn'];
                               // 执行函数
-                              if( typeof $fn == 'function'){
-                                  let $cbk = $fn(value);
-                                  //如果返回还是个promise，则将返回的状态赋值给newP
-                                  if($cbk && $cbk instanceof Promise){
-                                     //newP的回调队列挂载到新的状态上
-                                      $cbk.observers = $cbk.observers.concat(newP.observers);
-                                      newP = $cbk;
-                                      newP.then((val)=>{
-                                          newP.observers.forEach((o_fn)=>{
-                                            o_fn(newP);
-                                          })},(val)=>{
-                                          newP.observers.forEach((o_fn)=>{
-                                            o_fn(newP);
-                                          });
-                                      });
-                                  }else{
-                                     //如果没有可以执行的函数,则把newP赋值回去
-                                    newP.observers.forEach((o_fn)=>{
-                                      o_fn(self);
+                              let $cbk = typeof $fn == 'function' && $fn(value);
+                              //如果返回还是个promise，则将返回的状态赋值给newP
+                              if($cbk && $cbk instanceof Promise){
+                                 //newP的观察者队列挂载到新的状态上，完成状态转移
+                                  $cbk.observers = $cbk.observers.concat(newP.observers);
+                                  newP = $cbk;
+                                  //利用then，挂载执行观察者的条件
+
+                                  newP.then(
+                                    (val)=>{
+                                      console.dir(newP)
+                                      newP.observers.forEach((o_fn)=>o_fn(newP))
+                                    },
+                                    (val)=>{
+                                      console.dir(newP)
+                                      newP.observers.forEach((o_fn)=>o_fn(newP))
                                     });
-                                    newP = self;
-                                  }
                               }else{
-                                  //如果没有可以执行的函数,则把newP赋值回去
-                                    newP.observers.forEach((o_fn)=>{
-                                      o_fn(self);
-                                    });
-                                    newP = self;
-                              }
+                                //如果没有可以执行的函数,则把newP赋值回去
+                                newP.observers.forEach((o_fn)=>o_fn(self));
+                                newP = self;
+                            }
                           }
                         });
                         return newP;
@@ -163,10 +156,10 @@ export class Promise{
     }
     /* prototype 处理Promise的结构。 then的每个状态都是个容器，相互独立 */
     then(resFn,rejFn){
-       return this.handlelPromise('then')(resFn,rejFn);
+       return this.handlePromise('then')(resFn,rejFn);
     }
     catch(rejFn){
-       return this.handlelPromise('catch')(rejFn);
+       return this.handlePromise('catch')(rejFn);
     }
     /* 静态方法 处理Promise的逻辑 */
     static race(PromiseInstance){
@@ -252,25 +245,33 @@ console.log('welcome to use Promise')
 let test1 = new Promise((res,rej)=>{
     setTimeout(res,1000,1);
 });
-console.dir(test1);
+// console.dir(test1);
 let test2 = test1.then((val)=>{
-    console.log(val);
-    return new Promise((res,rej)=>{
-        setTimeout(res,1000,3);
-    }).then((val)=>{
-       return new Promise((res,rej)=>{
-         setTimeout(res,1000,4);
-       })
-    })
-});
-console.dir(test2);
-let test3 = test2.then((val)=>{
-    console.log(val);
+    // console.log(val);
     return new Promise((res,rej)=>{
         res(3);
+        // setTimeout(res,1000,3);
     })
+    // .then((val)=>{
+    //    return new Promise((res,rej)=>{
+    //      setTimeout(()=>{
+    //       res(3)
+    //     },1000);
+    //    })
+    // })
 });
-console.dir(test3);
+// console.dir(test2);
+setTimeout(()=>{
+  debugger;
+  test2.then((val)=>{debugger;})
+},5000);
+let test3 = test2.then((val)=>{
+    // console.log(val);
+    return new Promise((res,rej)=>{
+        res(3);
+    },(val)=>alert(val))
+});
+// console.dir(test3);
 
 
 

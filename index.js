@@ -27,6 +27,8 @@ export class Promise{
         this.callQueue = [];
         /*当前Promise依赖的之前的返回*/
         this.dependency = [];
+        /*所有观测Promise的对象*/
+        this.observers = [];
         /* 立即执行new Promise的参数函数executor,如果没有调用notifier通知，则一直为pending状态*/
         try{
           executor(this.notifier('resolved'),this.notifier('rejected'));
@@ -40,7 +42,11 @@ export class Promise{
            return this;
         }
     }
-     /*用来传递resolve + reject的通信*/
+    //注册观察者
+    subscribe(Observer_fn){
+      this.observers.push(Observer_fn);
+    }
+    /*用来传递resolve + reject的通信*/
     notifier(type){
         return (val)=>{
             // Promise的结果只能执行一次
@@ -50,56 +56,11 @@ export class Promise{
                     value:val||null
                 };
                 let C_length = this.callQueue.length;
-                //递归寻找执行函数
-                // let queuedHandler =()=>{
-                //      //从回调队列中取出处理函数
-                //     if(this.callQueue.length>0){
-                //         // 获取执行函数第一项触发结果
-                //         let _1stFn = this.callQueue.shift();
-                //         // 获取对应函数决定取resolvedFn还是rejectedFn来处理
-                //         let keyName = type + 'Fn';
-                //         let $fn = _1stFn[keyName];
-                //         // 执行函数
-                //         if( typeof $fn == 'function'){
-                //             // console.warn(`执行函数为链式调用的第${C_length-this.callQueue.length}个`)
-                //             this.chaindHandler($fn(val));
-                //         }else{
-                //             //继续寻找下一个能够处理的函数
-                //             queuedHandler();
-                //         }
-                //     }
-                // };
-                // queuedHandler();
+                //遍历观察者
+                this.observers.forEach((o_fn)=>{
+                  o_fn(this);
+                })
             }
-        }
-    }
-    /* 链式调用，
-     * 功能点1: 处理链式调用的返回
-     * 同步返回 ==> return this
-     * 异步返回 ==> return Promise
-     *
-     */
-    chaindHandler(Result){
-        /*必须return Promise*/
-        let {status,value} = this.promiseState;
-        if(Result){
-            /*
-             * 回调函数的结果如果是Promise，则返回该Promise,
-             * 同时把后续的回调函数栈赋值给新的Promise
-             */
-            if(Result instanceof Promise){
-                Result.callQueue =this.callQueue;
-                //将存储的then/catch重新放回到Result下面
-                while(this.callQueue.length>0){
-                     let {resolvedFn,rejectedFn} = this.callQueue.shift();
-                     Result = Result.then(resolvedFn,rejectedFn);
-                }
-            }
-            /*不然返回新的Promise实例*/
-            return Result instanceof Promise ? Result : new Promise(()=>{});
-        }else{
-            //没有返回，说明没有对应的函数处理或者是异步场景。则返回this，保持Promise的实例不变
-            return this;
         }
     }
     /*
@@ -133,18 +94,55 @@ export class Promise{
                         return rejFn && rejFn(value);
                          /*处理异步的情况*/
                     case 'pending':
-                        let newP = new Promise(()=>{},()=>{});
-                        /*处理异步,推送进回调数组*/
-                        newP.promiseState={
-                            status:'pending',
-                            value:null
-                        };
+                        let newP = new Promise((res,rej)=>{});
+                        /* 处理异步,推送进回调数组
+                         * 注册dependency中的notifier
+                         */
                         newP.callQueue = [{
                             resolvedFn:resFn||null,
                             rejectedFn:rejFn||null
                         }];
-                        /*当前的状态依赖上一个状态*/
-                        newP.dependency = this;
+                        /*注册对这个Promise的观察者*/
+                        self.subscribe((dependency_state)=>{
+                          let { promiseState } = dependency_state;
+                          let { status,value } = promiseState;
+                          if(newP.callQueue.length>0){
+                              // 获取执行函数第一项触发结果
+                              let _1stFn = newP.callQueue.shift();
+                              // 获取对应函数决定取resolvedFn还是rejectedFn来处理
+                              let $fn = _1stFn[status + 'Fn'];
+                              // 执行函数
+                              if( typeof $fn == 'function'){
+                                  let $cbk = $fn(value);
+                                  //如果返回还是个promise，则将返回的状态赋值给newP
+                                  if($cbk && $cbk instanceof Promise){
+                                     //newP的回调队列挂载到新的状态上
+                                      $cbk.observers = $cbk.observers.concat(newP.observers);
+                                      newP = $cbk;
+                                      newP.then((val)=>{
+                                          newP.observers.forEach((o_fn)=>{
+                                            o_fn(newP);
+                                          })},(val)=>{
+                                          newP.observers.forEach((o_fn)=>{
+                                            o_fn(newP);
+                                          });
+                                      });
+                                  }else{
+                                     //如果没有可以执行的函数,则把newP赋值回去
+                                    newP.observers.forEach((o_fn)=>{
+                                      o_fn(self);
+                                    });
+                                    newP = self;
+                                  }
+                              }else{
+                                  //如果没有可以执行的函数,则把newP赋值回去
+                                    newP.observers.forEach((o_fn)=>{
+                                      o_fn(self);
+                                    });
+                                    newP = self;
+                              }
+                          }
+                        });
                         return newP;
                 };
             }(status));
@@ -250,15 +248,19 @@ export class Promise{
     }
 }
 console.log('welcome to use Promise')
-/*测试同步情况*/
+/*测试异步情况*/
 let test1 = new Promise((res,rej)=>{
-    res(1);
+    setTimeout(res,1000,1);
 });
 console.dir(test1);
 let test2 = test1.then((val)=>{
     console.log(val);
     return new Promise((res,rej)=>{
-        res(2);
+        setTimeout(res,1000,3);
+    }).then((val)=>{
+       return new Promise((res,rej)=>{
+         setTimeout(res,1000,4);
+       })
     })
 });
 console.dir(test2);
