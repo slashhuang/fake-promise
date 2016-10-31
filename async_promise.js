@@ -27,6 +27,8 @@ export class Promise{
         this.callQueue = [];
         /*当前Promise依赖的之前的返回*/
         this.dependency = [];
+        /*所有观测Promise的对象*/
+        this.observers = [];
         /* 立即执行new Promise的参数函数executor,如果没有调用notifier通知，则一直为pending状态*/
         try{
           executor(this.notifier('resolved'),this.notifier('rejected'));
@@ -40,7 +42,10 @@ export class Promise{
            return this;
         }
     }
-     /*用来传递resolve + reject的通信*/
+    subscribe(Observer_fn){
+      this.observers.push(Observer_fn);
+    }
+    /*用来传递resolve + reject的通信*/
     notifier(type){
         return (val)=>{
             // Promise的结果只能执行一次
@@ -50,26 +55,9 @@ export class Promise{
                     value:val||null
                 };
                 let C_length = this.callQueue.length;
-                //递归寻找执行函数
-                // let queuedHandler =()=>{
-                //      //从回调队列中取出处理函数
-                //     if(this.callQueue.length>0){
-                //         // 获取执行函数第一项触发结果
-                //         let _1stFn = this.callQueue.shift();
-                //         // 获取对应函数决定取resolvedFn还是rejectedFn来处理
-                //         let keyName = type + 'Fn';
-                //         let $fn = _1stFn[keyName];
-                //         // 执行函数
-                //         if( typeof $fn == 'function'){
-                //             // console.warn(`执行函数为链式调用的第${C_length-this.callQueue.length}个`)
-                //             this.chaindHandler($fn(val));
-                //         }else{
-                //             //继续寻找下一个能够处理的函数
-                //             queuedHandler();
-                //         }
-                //     }
-                // };
-                // queuedHandler();
+                this.observers.forEach((o_fn)=>{
+                  o_fn(this);
+                })
             }
         }
     }
@@ -105,7 +93,9 @@ export class Promise{
                          /*处理异步的情况*/
                     case 'pending':
                         let newP = new Promise(()=>{},()=>{});
-                        /*处理异步,推送进回调数组*/
+                        /* 处理异步,推送进回调数组
+                         * 注册dependency中的notifier
+                         */
                         newP.promiseState={
                             status:'pending',
                             value:null
@@ -114,8 +104,27 @@ export class Promise{
                             resolvedFn:resFn||null,
                             rejectedFn:rejFn||null
                         }];
-                        /*当前的状态依赖上一个状态*/
-                        newP.dependency = self;
+                        /*注册对这个Promise的观察者*/
+                        self.subscribe((dependency_state)=>{
+                          debugger;
+                          let { promiseState } = dependency_state;
+                          let { status,value } = promiseState;
+                          if(newP.callQueue.length>0){
+                              // 获取执行函数第一项触发结果
+                              let _1stFn = newP.callQueue.shift();
+                              // 获取对应函数决定取resolvedFn还是rejectedFn来处理
+                              let $fn = _1stFn[status + 'Fn'];
+                              // 执行函数
+                              if( typeof $fn == 'function'){
+                                  $fn(val);
+                                  //回收callQueue
+                                  newP.callQueue = [];
+                              }else{
+                                  //如果没有可以执行的函数,则把newP赋值回去
+                                  newP = self;
+                              }
+                          }
+                        });
                         return newP;
                 };
             }(status));
