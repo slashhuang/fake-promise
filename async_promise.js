@@ -42,6 +42,7 @@ export class Promise{
            return this;
         }
     }
+    //注册观察者
     subscribe(Observer_fn){
       this.observers.push(Observer_fn);
     }

@@ -9,7 +9,9 @@
 5. 前后端通用,相比于node/browser内置的Promise对象更具有扩展性
 6. 源代码基于ES6的class语法，更加清晰
 
-### [查看代码](index.js)
+### [同步Promise的实现](sync_promise.js)
+### [异步Promise的实现](async_promise.js)
+### [最终Promise的实现](index.js)
 
 ## Promise基本设计思路
 > 对于一个长这样的Promise结构
