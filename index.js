@@ -29,18 +29,25 @@ let api = (context,type,fn)=>{
 
 let dealPromise=(promiseContext,$type,value)=>{
     promiseContext.next.forEach((nextObj)=>{
-        let {type,fn} = nextObj;
+        let {type,fn,next} = nextObj;
+        let result = null;
         //单条分支，找到最近的一次处理
         if(type==$type){
-          let result = fn(value);
-          if( result && result instanceof Promise){
-          //如果结果为Promise，则对子节点的上下文重新挂载
+          try{
+             result = fn(value);
+             // 转换成Promise
+             if (!(result instanceof Promise)) {
+                result = Promise.resolve(result);
+             }
+          }catch(e){
+             result = Promise.reject(e);
           }
-        }else{
-          //继续对子节点进行操作
-          // dealPromise(nextObj)
+          //将处理后的节点重新挂载
+          result.next = nextObj.next;
+        }else if(callbackObject.next.length){
+           dealPromise(nextObj,$type,value)
         }
-        dealPromise(nextObj,$type,value)
+       
     })
 };
 
@@ -127,12 +134,29 @@ export class Promise{
        }
     }
 }
+Promise.resolve = function (result) {
+  if (result instanceof Promise) return new Promise(function (resolve, reject) {
+    return result.then(res => resolve(res), err => reject(err));
+  });
+  return new Promise(function (resolve, reject) {
+    resolve(result);
+  });
+};
+Promise.reject = function (err) {
+  return new Promise(function (resolve, reject) {
+    reject(err);
+  });
+};
 console.log('welcome to use Promise')
 /*测试同步情况*/
 let test1 = new Promise((res,rej)=>{
     setTimeout(res,100,1);
 });
-let test2 = test1.then((val1)=>{console.log(val1)})
+let test2 = test1.then((val1)=>{
+  return new Promise((res,rej)=>{
+    setTimeout(res,100,2);
+  })
+})
 let test3 = test1.then((val2)=>{console.log(val2)});
 let test4 = test2.then((val4)=>{console.log(val4)});
 // let test3 = test2.then((val3)=>{}).then((val4)=>{});
