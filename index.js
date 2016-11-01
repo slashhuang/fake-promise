@@ -50,18 +50,36 @@ let dealPromise=(promiseContext,$type,value)=>{
        
     })
 };
+//为了处理，直接挂载then/catch，修改Array的push方法
+class NextShape extends Array{
+  constructor(){
+    super();
+    this.a='a';
+  }
+  $push(nextObj){
+    super.push(nextObj);
+    //如果推送进数组的时候，上下文已经是个Promise了，则执行一次
+    this._ctx && this._ctx._checkState();
+  }
+}
+console.dir(NextShape)
+
+let q = new NextShape({})
+console.dir(q);
+q.$push(1)
+
+
 
 class NextObject {
   constructor(type,fn){
     this.type=type;
     this.fn=fn;
-    this.next=[];
+    this.next= new NextShape();
   }
   addChild(nextObject) {
     this.next.push(nextObject);
   }
 }
-
 
 export class Promise{
     constructor(executor){
@@ -75,7 +93,7 @@ export class Promise{
             value:null
         };
          /*处理then/catch*/
-        this.next = [];
+        this.next = new NextShape();
         /* 立即执行new Promise的参数函数executor,如果没有调用notifier通知，则一直为pending状态*/
         try{
           executor(this.notifier('then'),this.notifier('catch'));
@@ -88,6 +106,12 @@ export class Promise{
            //通知执行出错处理
            return this;
         }
+    }
+    _checkState(){
+      let {type,value} = this.promiseState;
+      if (type!='pending'){
+        this.notifier(type)(value);
+      }
     }
     /*用来传递resolve + reject的通信*/
     notifier(type){
@@ -159,10 +183,8 @@ let test2 = test1.then((val1)=>{
 })
 let test3 = test1.then((val2)=>{console.log(val2)});
 let test4 = test2.then((val4)=>{console.log(val4)});
-// let test3 = test2.then((val3)=>{}).then((val4)=>{});
-console.dir(test1);
-console.dir(test2);
-console.dir(test3);
+
+setTimeout(()=>test2.then((val4)=>{debugger;console.log(val4)}),500)
 
 
 
