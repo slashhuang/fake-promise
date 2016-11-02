@@ -3,7 +3,9 @@
 ## 项目特点
 
 1. 通过了[MDN官网的Promise所有用例](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)。
+
 2. 实现了基于prototype和Promise静态的方法。
+
 3. 源代码基于ES6的class语法，更加清晰
 
 ### [最终Promise的实现](index.js)
@@ -13,7 +15,9 @@
 1. 数据结构
 
 > 采用链表的数据结构来描述Promise的状态
+
 > then/catch方法抽象为树形链表的一个节点(可以类比dom tree)
+
 > Promise抽象为状态的发起者,向所有的子节点触发事件，每条branch都只有一个回应者,依次递归。
 
 2. 算法
