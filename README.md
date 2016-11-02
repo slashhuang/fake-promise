@@ -1,15 +1,13 @@
-# ismorphic-promise.同构JS promise异步处理模块。
+# ismorphic-promise. promise异步处理的JS实现。
 
 [![build status](https://travis-ci.org/slashhuang/ismorphic-promise.svg?branch=master)](https://travis-ci.org/slashhuang/ismorphic-promise)
 ## 项目特点
 
-1. 通过了[MDN官网的Promise所有用例](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)。
+1. 通过了[MDN官网的Promise用例](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)。
 
-2. 实现了基于prototype和Promise静态的方法。
+2. 源代码基于ES6的class语法，更加清晰
 
-3. 源代码基于ES6的class语法，更加清晰
-
-### [最终Promise的实现](index.js)
+### [实现的Promise源码](index.js)
 
 ## Promise设计的基本框架
 
