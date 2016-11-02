@@ -28,10 +28,10 @@ let api = (context,type,fn)=>{
 }
 
 let dealPromise=(promiseContext,$type,value)=>{
-    promiseContext.next.forEach((nextObj)=>{
+    promiseContext.next.child().forEach((nextObj)=>{
         let {type,fn,next} = nextObj;
         let result = null;
-        //单条分支，找到最近的一次处理
+        //单条分支，找到最近的一次处理,执行就将该节点转化为Promise
         if(type==$type){
           try{
              result = fn(value);
@@ -55,11 +55,25 @@ class NextObject {
   constructor(type,fn){
     this.type=type;
     this.fn=fn;
-    this.next= [];
+    this.next= new NextArray();
   }
   addChild(nextObject) {
     this.next.push(nextObject);
   }
+}
+class NextArray {
+    constructor(){
+      this.nexter = [];
+    }
+    push(nextObject){
+      this.nexter.push(nextObject);
+      if(this instanceof Promise){
+        this._checkState();
+      }
+    }
+    child(){
+      return this.nexter;
+    }
 }
 
 export class Promise{
@@ -76,7 +90,7 @@ export class Promise{
         /*是否已经有结果*/
         this.sealed = false;
          /*处理then/catch*/
-        this.next = [];
+        this.next = new NextArray();
         /* 立即执行new Promise的参数函数executor,如果没有调用notifier通知，则一直为pending状态*/
         try{
           executor(this.notifier('then'),this.notifier('catch'));

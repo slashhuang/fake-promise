@@ -96,7 +96,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 	var dealPromise = function dealPromise(promiseContext, $type, value) {
-	  promiseContext.next.forEach(function (nextObj) {
+	  promiseContext.next.child().forEach(function (nextObj) {
 	    var type = nextObj.type,
 	        fn = nextObj.fn,
 	        next = nextObj.next;
@@ -127,7 +127,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    this.type = type;
 	    this.fn = fn;
-	    this.next = [];
+	    this.next = new NextArray();
 	  }
 
 	  _createClass(NextObject, [{
@@ -138,6 +138,31 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }]);
 
 	  return NextObject;
+	}();
+
+	var NextArray = function () {
+	  function NextArray() {
+	    _classCallCheck(this, NextArray);
+
+	    this.nexter = [];
+	  }
+
+	  _createClass(NextArray, [{
+	    key: 'push',
+	    value: function push(nextObject) {
+	      this.nexter.push(nextObject);
+	      if (this instanceof Promise) {
+	        this._checkState();
+	      }
+	    }
+	  }, {
+	    key: 'child',
+	    value: function child() {
+	      return this.nexter;
+	    }
+	  }]);
+
+	  return NextArray;
 	}();
 
 	var Promise = exports.Promise = function () {
@@ -156,7 +181,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    /*是否已经有结果*/
 	    this.sealed = false;
 	    /*处理then/catch*/
-	    this.next = [];
+	    this.next = new NextArray();
 	    /* 立即执行new Promise的参数函数executor,如果没有调用notifier通知，则一直为pending状态*/
 	    try {
 	      executor(this.notifier('then'), this.notifier('catch'));
