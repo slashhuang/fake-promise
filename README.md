@@ -1,5 +1,6 @@
 # ismorphic-promise.同构JS promise异步处理模块。
 
+[![build status](https://travis-ci.org/slashhuang/ismorphic-promise.svg?branch=master)](https://travis-ci.org/slashhuang/ismorphic-promise)
 ## 项目特点
 
 1. 通过了[MDN官网的Promise所有用例](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)。
