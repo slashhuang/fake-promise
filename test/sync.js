@@ -1,7 +1,6 @@
 
 const  Promise = require('../')['Promise'];
 
-console.dir(Promise);
 var assert = require('assert');
 
 describe('sync Promise test', function () {

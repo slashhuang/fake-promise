@@ -157,7 +157,7 @@ Promise.reject = function (err) {
     reject(err);
   });
 };
-Promise.all = function (...promiseArr) {
+Promise.all = function (promiseArr) {
   if(typeof promiseArr !=='object'){
     throw TypeError('Promise.all arguments should be a promise array')
   }
@@ -178,15 +178,18 @@ Promise.all = function (...promiseArr) {
           }
         }
       };
-
       promiseArr.forEach((promiseItem)=>{
-        promiseItem
-        .then((val)=>cachedState.push('then',val))
-        .catch((val)=>cachedState.push('catch',val))
-      })
+        if(promiseItem instanceof Promise){
+             promiseItem
+            .then((val)=>cachedState.push('then',val))
+            .catch((val)=>cachedState.push('catch',val))
+        }else{
+            cachedState.push('then',promiseItem)
+        }
+    });
   });
-};
-Promise.race = function (...promiseArr) {
+}
+Promise.race = function (promiseArr) {
   if(typeof promiseArr !=='object'){
     throw TypeError('Promise.race arguments should be a promise array')
   }

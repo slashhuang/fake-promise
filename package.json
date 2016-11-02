@@ -7,7 +7,7 @@
     "start": "npm run open && ./node_modules/.bin/webpack-dev-server --progress --colors --port 8002  --file index",
     "dev": " npm run open && ./node_modules/.bin/webpack-dev-server --progress --colors --port 8002  --file test",
     "build": "./node_modules/.bin/webpack --file index ",
-    "test": "mocha",
+    "test": "npm run build  && mocha",
     "open": "open http://localhost:8002/webpack-dev-server/"
   },
   "repository": {

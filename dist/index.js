@@ -267,11 +267,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    reject(err);
 	  });
 	};
-	Promise.all = function () {
-	  for (var _len = arguments.length, promiseArr = Array(_len), _key = 0; _key < _len; _key++) {
-	    promiseArr[_key] = arguments[_key];
-	  }
-
+	Promise.all = function (promiseArr) {
 	  if ((typeof promiseArr === 'undefined' ? 'undefined' : _typeof(promiseArr)) !== 'object') {
 	    throw TypeError('Promise.all arguments should be a promise array');
 	  }
@@ -293,21 +289,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	      }
 	    };
-
 	    promiseArr.forEach(function (promiseItem) {
-	      promiseItem.then(function (val) {
-	        return cachedState.push('then', val);
-	      }).catch(function (val) {
-	        return cachedState.push('catch', val);
-	      });
+	      if (promiseItem instanceof Promise) {
+	        promiseItem.then(function (val) {
+	          return cachedState.push('then', val);
+	        }).catch(function (val) {
+	          return cachedState.push('catch', val);
+	        });
+	      } else {
+	        cachedState.push('then', promiseItem);
+	      }
 	    });
 	  });
 	};
-	Promise.race = function () {
-	  for (var _len2 = arguments.length, promiseArr = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-	    promiseArr[_key2] = arguments[_key2];
-	  }
-
+	Promise.race = function (promiseArr) {
 	  if ((typeof promiseArr === 'undefined' ? 'undefined' : _typeof(promiseArr)) !== 'object') {
 	    throw TypeError('Promise.race arguments should be a promise array');
 	  }

@@ -14,7 +14,7 @@ describe('Promise.all test', function () {
               resolve('Promise.all 2')
         },20)
     });
-    Promise.all(t1,t2).then((val)=>{
+    Promise.all([t1,t2]).then((val)=>{
         console.log(val);
         done();
     }).catch((val)=>{
