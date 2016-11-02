@@ -1,71 +1,24 @@
 
-/**
- * Created by slashhuang on 16/10/29.
- * Promise测试用例
- */
- import { Promise } from './index.js';
 
-/* 测试1用来 测试同步情况下的处理 ======测试通过======*/
-let test1  = new Promise((resolve,reject)=>{
-    throw new TypeError('fuck')
-})
-.then((val)=>{},
-    (val)=>{
-    console.log(val);
-    return new Promise((res,rej)=>{rej(2)})
-})
-.then((val)=>{
-    console.log(val)
-})
-.catch((val)=>{
-    console.log('catch=====',val+1)
-});
-
-/* 测试2用来 测试异步情况下，队列形式的函数处理 ======测试通过======*/
-let test2  = new Promise((resolve,reject)=>{
-    setTimeout(()=>{
-        console.log('async  ==>  level 1');
-        resolve('async level 1')
-    },100)
-})
-.then('1') //参数无法处理Promise状态，寻找下一个执行函数
-.then((val)=>{
-        console.warn(val,'---- executed');
-        return new Promise((res,rej)=>{
-            console.log('sync after async ==> level 2');
-            res('sync after async level 2')
-        })
-})
-.then((val)=>{
-        console.warn(val,'---- executed');
-        return new Promise((res,rej)=>{
-            console.log('sync after async ==> level 2');
-            throw new TypeError('sync error thrown');
-        })
-})
-.catch((val)=>{
-    console.log('catch=====',val)
-});
-
+import {Promise} from './index.js';
 /* 测试3用来 测试静态方法 race + all ======测试通过======*/
+
+
+const  P =require('./dist/index.js')['Promise'];
+debugger;
 
 let t1 = ()=>new Promise((resolve,reject)=>{
     setTimeout(()=>{
-        console.error('测试静态方法===Promise.all')
         resolve('Promise.all 1')
     },100)
 })
 
-console.error('测试静态方法===Promise.race')
 let t2 =()=> new Promise((resolve,reject)=>{
     setTimeout(()=>{
-        console.error('测试静态方法===Promise.all')
           resolve('Promise.all 2')
     },110)
 });
 Promise.all(t1(),t2()).then((val)=>console.dir(JSON.stringify(val)));
-
-Promise.race(t1(),t2()).then((val)=>console.dir(JSON.stringify(val)));
 
 
 

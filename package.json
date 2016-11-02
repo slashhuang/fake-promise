@@ -2,12 +2,12 @@
   "name": "ismorphic-promise",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./dist/index.js",
   "scripts": {
     "start": "npm run open && ./node_modules/.bin/webpack-dev-server --progress --colors --port 8002  --file index",
-    "sync": "npm run open && ./node_modules/.bin/webpack-dev-server --progress --colors --port 8002  --file sync_promise",
-    "async": "npm run open && ./node_modules/.bin/webpack-dev-server --progress --colors --port 8002  --file async_promise",
-    "test": " npm run open && ./node_modules/.bin/webpack-dev-server --progress --colors --port 8002  --file test",
+    "dev": " npm run open && ./node_modules/.bin/webpack-dev-server --progress --colors --port 8002  --file test",
+    "build": "./node_modules/.bin/webpack --file index ",
+    "test": "mocha",
     "open": "open http://localhost:8002/webpack-dev-server/"
   },
   "repository": {
@@ -17,6 +17,7 @@
   "author": "slashhuang",
   "license": "ISC",
   "devDependencies": {
+    "assert": "^1.4.1",
     "babel-core": "^6.13.2",
     "babel-loader": "^6.2.4",
     "babel-plugin-add-module-exports": "^0.2.1",

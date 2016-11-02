@@ -8,6 +8,7 @@ module.exports = {
         index:'./'+process.argv[process.argv.length-1]+'.js'
     },
     output: {
+        libraryTarget: 'umd',
         publicPath:'/dist/',
         path: path.join(__dirname,'dist'),
         filename: "[name].js"

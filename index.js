@@ -10,8 +10,8 @@
        fn//回调处理
     }
  }
- * 
- */  
+ *
+ */
 
 /*存储数据结构*/
 let api = (context,type,fn)=>{
@@ -44,37 +44,18 @@ let dealPromise=(promiseContext,$type,value)=>{
           }
           //将处理后的节点重新挂载
           result.next = nextObj.next;
-        }else if(callbackObject.next.length){
+        }else if(nextObj.next.length){
            dealPromise(nextObj,$type,value)
         }
-       
+
     })
 };
-//为了处理，直接挂载then/catch，修改Array的push方法
-class NextShape extends Array{
-  constructor(){
-    super();
-    this.a='a';
-  }
-  $push(nextObj){
-    super.push(nextObj);
-    //如果推送进数组的时候，上下文已经是个Promise了，则执行一次
-    this._ctx && this._ctx._checkState();
-  }
-}
-console.dir(NextShape)
-
-let q = new NextShape({})
-console.dir(q);
-q.$push(1)
-
-
 
 class NextObject {
   constructor(type,fn){
     this.type=type;
     this.fn=fn;
-    this.next= new NextShape();
+    this.next= [];
   }
   addChild(nextObject) {
     this.next.push(nextObject);
@@ -92,8 +73,10 @@ export class Promise{
             type:'pending',
             value:null
         };
+        /*是否已经有结果*/
+        this.sealed = false;
          /*处理then/catch*/
-        this.next = new NextShape();
+        this.next = [];
         /* 立即执行new Promise的参数函数executor,如果没有调用notifier通知，则一直为pending状态*/
         try{
           executor(this.notifier('then'),this.notifier('catch'));
@@ -116,12 +99,15 @@ export class Promise{
     /*用来传递resolve + reject的通信*/
     notifier(type){
         return (value)=>{
-            //Promise的结果只能执行一次
-            this.promiseState={
-              type,
-              value
-            };
-            setTimeout(()=>dealPromise(this,type,value),0);
+           //Promise的结果只执行一次，就不再接受其他状态
+            if(this.sealed == false){
+              this.sealed=true;
+              this.promiseState={
+                type,
+                value
+              };
+              setTimeout(()=>dealPromise(this,type,value),0);
+            }
         }
     }
     handlePromise(type){
@@ -171,20 +157,57 @@ Promise.reject = function (err) {
     reject(err);
   });
 };
-console.log('welcome to use Promise')
-/*测试同步情况*/
-let test1 = new Promise((res,rej)=>{
-    setTimeout(res,100,1);
-});
-let test2 = test1.then((val1)=>{
-  return new Promise((res,rej)=>{
-    setTimeout(res,100,2);
-  })
-})
-let test3 = test1.then((val2)=>{console.log(val2)});
-let test4 = test2.then((val4)=>{console.log(val4)});
+Promise.all = function (...promiseArr) {
+  if(typeof promiseArr !=='object'){
+    throw TypeError('Promise.all arguments should be a promise array')
+  }
+  let length = promiseArr.length;
+  return new Promise(function (resolve, reject) {
+      let cachedState={
+        promiseCache:[],
+        push:function(type,val){
+          /*第一个reject出错，即不再执行Promise*/
+          if(type=='catch'){
+            reject(val);
+          }else{
+            let {promiseCache} = cachedState;
+            promiseCache.push(val);
+            if(promiseCache.length ==length){
+              resolve(promiseCache);
+            }
+          }
+        }
+      };
 
-setTimeout(()=>test2.then((val4)=>{debugger;console.log(val4)}),500)
+      promiseArr.forEach((promiseItem)=>{
+        promiseItem
+        .then((val)=>cachedState.push('then',val))
+        .catch((val)=>cachedState.push('catch',val))
+      })
+  });
+};
+Promise.race = function (...promiseArr) {
+  if(typeof promiseArr !=='object'){
+    throw TypeError('Promise.race arguments should be a promise array')
+  }
+  let length = promiseArr.length;
+  return new Promise(function (resolve, reject) {
+      let cachedState={
+        promiseCache:[],
+        push:function(type,val){
+          /*只要执行了，就说明已经*/
+           type=='then' && resolve(val);
+           type=='catch' && reject(val)
+        }
+      };
+      promiseArr.forEach((promiseItem)=>{
+        promiseItem
+        .then((val)=>cachedState.push('then',val))
+        .catch((val)=>cachedState.push('catch',val))
+      })
+  });
+};
+console.log('welcome to use Promise')
 
 
 
