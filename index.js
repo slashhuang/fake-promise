@@ -16,7 +16,15 @@
 /*存储数据结构*/
 let api = (context,type,fn)=>{
     let nextObj = new NextObject(type,fn);
-    context.next.addChild(context,nextObj);
+    let { $promise } = context;
+    //切换上下文
+    let _context = $promise || context;
+    //回收存储空间
+    if($promise){
+       _context.next=new NextArray();
+    }
+    /*每次调用then/catch需要根据$promise参数检查当前环境是否已经有状态*/
+    _context.next.digestAddChild($promise,nextObj);
     return {
       then:function(fn){
         return api(nextObj,'then',fn)
@@ -28,7 +36,7 @@ let api = (context,type,fn)=>{
 }
 
 let dealPromise=(promiseContext,$type,value)=>{
-    promiseContext.next.child().forEach((nextObj)=>{
+    promiseContext.next.child().forEach((nextObj,index)=>{
         let {type,fn,next} = nextObj;
         let result = null;
         //单条分支，找到最近的一次处理,执行就将该节点转化为Promise
@@ -44,6 +52,8 @@ let dealPromise=(promiseContext,$type,value)=>{
           }
           //将处理后的节点重新挂载
           result.next = nextObj.next;
+          //挂载$promise用于切换上下文
+          nextObj.$promise = result;
         }else if(nextObj.next.length){
            dealPromise(nextObj,$type,value)
         }
@@ -62,12 +72,20 @@ class NextArray {
     constructor(){
       this.nexter = [];
     }
-    addChild(context,nextObject) {
+    /*then/catch*/
+    digestAddChild(context,nextObject) {
       //通过call的形式，保持上下文
-      this.nexter.push(nextObject);
+      this.push(nextObject);
       if(context instanceof Promise){
-        context._checkState();
+        //当前已有状态，就通知可以执行
+          context._checkState();
       }
+    }
+    push(nextObject){
+        this.nexter.push(nextObject);
+    }
+    replaceChild(index,nextObject){
+      this.nexter.splice(index,1,nextObject);
     }
     child(){
       return this.nexter;
@@ -112,21 +130,21 @@ export class Promise{
     notifier(type){
         return (value)=>{
            //Promise的结果只执行一次，就不再接受其他状态
-            if(this.sealed == false){
-              this.sealed=true;
+          if(this.sealed==false){
               this.promiseState={
-                type,
-                value
+                  type,
+                  value
               };
-              setTimeout(()=>dealPromise(this,type,value),0);
-            }
+          };
+          this.sealed=true;
+          setTimeout(()=> dealPromise(this,type,value),0);
         }
     }
     handlePromise(type){
       return (fn)=>{
          //存储数据结构
          let nextObject = new NextObject(type,fn);
-         this.next.addChild(this,nextObject);
+         this.next.push(nextObject);
          return {
             then:(fn)=>{
               return api(nextObject,'then',fn)
@@ -222,19 +240,6 @@ Promise.race = function (promiseArr) {
       })
   });
 };
-console.log('welcome to use Promise')
-let test = new Promise((resolve,reject)=>{
-            resolve(1);
-        })
-        .then((val)=>{
-          return new Promise((res,rej)=>rej(val+1))
-        })
-        .catch((val)=>{
-            console.log(val==2);
-            console.dir(test);
-            cb();
-        });
-
 
 
 

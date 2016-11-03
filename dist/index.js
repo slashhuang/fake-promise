@@ -84,7 +84,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	/*存储数据结构*/
 	var api = function api(context, type, fn) {
 	  var nextObj = new NextObject(type, fn);
-	  context.next.addChild(context, nextObj);
+	  var $promise = context.$promise;
+	  //切换上下文
+
+	  var _context = $promise || context;
+	  //回收存储空间
+	  if ($promise) {
+	    _context.next = new NextArray();
+	  }
+	  /*每次调用then/catch需要根据$promise参数检查当前环境是否已经有状态*/
+	  _context.next.digestAddChild($promise, nextObj);
 	  return {
 	    then: function then(fn) {
 	      return api(nextObj, 'then', fn);
@@ -96,7 +105,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 	var dealPromise = function dealPromise(promiseContext, $type, value) {
-	  promiseContext.next.child().forEach(function (nextObj) {
+	  promiseContext.next.child().forEach(function (nextObj, index) {
 	    var type = nextObj.type,
 	        fn = nextObj.fn,
 	        next = nextObj.next;
@@ -115,6 +124,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	      //将处理后的节点重新挂载
 	      result.next = nextObj.next;
+	      //挂载$promise用于切换上下文
+	      nextObj.$promise = result;
 	    } else if (nextObj.next.length) {
 	      dealPromise(nextObj, $type, value);
 	    }
@@ -135,15 +146,28 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    this.nexter = [];
 	  }
+	  /*then/catch*/
+
 
 	  _createClass(NextArray, [{
-	    key: 'addChild',
-	    value: function addChild(context, nextObject) {
+	    key: 'digestAddChild',
+	    value: function digestAddChild(context, nextObject) {
 	      //通过call的形式，保持上下文
-	      this.nexter.push(nextObject);
+	      this.push(nextObject);
 	      if (context instanceof Promise) {
+	        //当前已有状态，就通知可以执行
 	        context._checkState();
 	      }
+	    }
+	  }, {
+	    key: 'push',
+	    value: function push(nextObject) {
+	      this.nexter.push(nextObject);
+	    }
+	  }, {
+	    key: 'replaceChild',
+	    value: function replaceChild(index, nextObject) {
+	      this.nexter.splice(index, 1, nextObject);
 	    }
 	  }, {
 	    key: 'child',
@@ -207,15 +231,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return function (value) {
 	        //Promise的结果只执行一次，就不再接受其他状态
 	        if (_this.sealed == false) {
-	          _this.sealed = true;
 	          _this.promiseState = {
 	            type: type,
 	            value: value
 	          };
-	          setTimeout(function () {
-	            return dealPromise(_this, type, value);
-	          }, 0);
-	        }
+	        };
+	        _this.sealed = true;
+	        setTimeout(function () {
+	          return dealPromise(_this, type, value);
+	        }, 0);
 	      };
 	    }
 	  }, {
@@ -226,7 +250,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return function (fn) {
 	        //存储数据结构
 	        var nextObject = new NextObject(type, fn);
-	        _this2.next.addChild(_this2, nextObject);
+	        _this2.next.push(nextObject);
 	        return {
 	          then: function then(fn) {
 	            return api(nextObject, 'then', fn);
@@ -341,17 +365,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	  });
 	};
 	console.log('welcome to use Promise');
-	var test = new Promise(function (resolve, reject) {
+	var p = new Promise(function (resolve, reject) {
 	  resolve(1);
 	}).then(function (val) {
 	  return new Promise(function (res, rej) {
 	    return rej(val + 1);
 	  });
-	}).catch(function (val) {
-	  console.log(val == 2);
-	  console.dir(test);
-	  cb();
 	});
+	console.log(p);
+	var q = p.catch(function (val) {
+	  console.log(val);
+	});
+
+	setTimeout(function () {
+	  p.then(function (val) {
+	    return console.log(val);
+	  }).catch(function (val) {
+	    return console.log(val);
+	  });
+	}, 100);
 
 /***/ }
 /******/ ])
