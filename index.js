@@ -65,8 +65,8 @@ class NextArray {
     addChild(context,nextObject) {
       //通过call的形式，保持上下文
       this.nexter.push(nextObject);
-      if(this instanceof Promise){
-        this._checkState();
+      if(context instanceof Promise){
+        context._checkState();
       }
     }
     child(){
