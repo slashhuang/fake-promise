@@ -84,7 +84,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/*存储数据结构*/
 	var api = function api(context, type, fn) {
 	  var nextObj = new NextObject(type, fn);
-	  context.addChild(nextObj);
+	  context.next.addChild(context, nextObj);
 	  return {
 	    then: function then(fn) {
 	      return api(nextObj, 'then', fn);
@@ -102,7 +102,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        next = nextObj.next;
 
 	    var result = null;
-	    //单条分支，找到最近的一次处理
+	    //单条分支，找到最近的一次处理,执行就将该节点转化为Promise
 	    if (type == $type) {
 	      try {
 	        result = fn(value);
@@ -121,24 +121,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	  });
 	};
 
-	var NextObject = function () {
-	  function NextObject(type, fn) {
-	    _classCallCheck(this, NextObject);
+	var NextObject = function NextObject(type, fn) {
+	  _classCallCheck(this, NextObject);
 
-	    this.type = type;
-	    this.fn = fn;
-	    this.next = new NextArray();
-	  }
-
-	  _createClass(NextObject, [{
-	    key: 'addChild',
-	    value: function addChild(nextObject) {
-	      this.next.push(nextObject);
-	    }
-	  }]);
-
-	  return NextObject;
-	}();
+	  this.type = type;
+	  this.fn = fn;
+	  this.next = new NextArray();
+	};
 
 	var NextArray = function () {
 	  function NextArray() {
@@ -148,8 +137,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 
 	  _createClass(NextArray, [{
-	    key: 'push',
-	    value: function push(nextObject) {
+	    key: 'addChild',
+	    value: function addChild(context, nextObject) {
+	      //通过call的形式，保持上下文
 	      this.nexter.push(nextObject);
 	      if (this instanceof Promise) {
 	        this._checkState();
@@ -236,7 +226,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return function (fn) {
 	        //存储数据结构
 	        var nextObject = new NextObject(type, fn);
-	        _this2.next.push(nextObject);
+	        _this2.next.addChild(_this2, nextObject);
 	        return {
 	          then: function then(fn) {
 	            return api(nextObject, 'then', fn);
@@ -351,6 +341,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	  });
 	};
 	console.log('welcome to use Promise');
+	var test = new Promise(function (resolve, reject) {
+	  resolve(1);
+	}).then(function (val) {
+	  return new Promise(function (res, rej) {
+	    return rej(val + 1);
+	  });
+	}).catch(function (val) {
+	  console.log(val == 2);
+	  console.dir(test);
+	  cb();
+	});
 
 /***/ }
 /******/ ])

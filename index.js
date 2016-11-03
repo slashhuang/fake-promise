@@ -16,7 +16,7 @@
 /*存储数据结构*/
 let api = (context,type,fn)=>{
     let nextObj = new NextObject(type,fn);
-    context.addChild(nextObj);
+    context.next.addChild(context,nextObj);
     return {
       then:function(fn){
         return api(nextObj,'then',fn)
@@ -57,15 +57,13 @@ class NextObject {
     this.fn=fn;
     this.next= new NextArray();
   }
-  addChild(nextObject) {
-    this.next.push(nextObject);
-  }
 }
 class NextArray {
     constructor(){
       this.nexter = [];
     }
-    push(nextObject){
+    addChild(context,nextObject) {
+      //通过call的形式，保持上下文
       this.nexter.push(nextObject);
       if(this instanceof Promise){
         this._checkState();
@@ -128,12 +126,12 @@ export class Promise{
       return (fn)=>{
          //存储数据结构
          let nextObject = new NextObject(type,fn);
-         this.next.push(nextObject);
+         this.next.addChild(this,nextObject);
          return {
-            then:function(fn){
+            then:(fn)=>{
               return api(nextObject,'then',fn)
             },
-            catch:function(fn) {
+            catch:(fn)=>{
               return api(nextObject,'catch',fn)
             }
          }
@@ -225,6 +223,17 @@ Promise.race = function (promiseArr) {
   });
 };
 console.log('welcome to use Promise')
+let test = new Promise((resolve,reject)=>{
+            resolve(1);
+        })
+        .then((val)=>{
+          return new Promise((res,rej)=>rej(val+1))
+        })
+        .catch((val)=>{
+            console.log(val==2);
+            console.dir(test);
+            cb();
+        });
 
 
 
