@@ -364,26 +364,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    });
 	  });
 	};
-	console.log('welcome to use Promise');
-	var p = new Promise(function (resolve, reject) {
-	  resolve(1);
-	}).then(function (val) {
-	  return new Promise(function (res, rej) {
-	    return rej(val + 1);
-	  });
-	});
-	console.log(p);
-	var q = p.catch(function (val) {
-	  console.log(val);
-	});
-
-	setTimeout(function () {
-	  p.then(function (val) {
-	    return console.log(val);
-	  }).catch(function (val) {
-	    return console.log(val);
-	  });
-	}, 100);
 
 /***/ }
 /******/ ])
